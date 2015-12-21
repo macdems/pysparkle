@@ -3,23 +3,15 @@
 
 import sys
 import importlib
-import platform
 import webbrowser
 
 from .backend import ConnectionError
 from .backend.appcast import Appcast
 
-
-OS, _, _, _, ARCH, _ = platform.uname()
-OS = OS.lower()
-ARCH = ARCH.lower()
-ARCH = {'amd64': 'x86_64'}.get(ARCH, ARCH)
-if OS == 'linux':
-    _dist, _dist_ver, _dist_id = (s.lower() for s in platform.dist())
-    DISTS = [_dist, _dist+'-'+_dist_ver]
-    try: DISTS.append(_dist+'-'+_dist_ver[:_dist_ver.rindex('.')])
-    except ValueError: pass
-    if _dist_id: DISTS.append(_dist+'-'+_dist_id)
+try:
+    unicode = unicode
+except NameError:
+    unicode = str
 
 
 class _DebugDict(dict):
@@ -96,16 +88,16 @@ class PySparkle(object):
         """
         try:
             items = self.backend.check_update(self.show_notes)
-        except ConnectionError as err:
-            if verbose: self.frontend.checking_error(err.message)
+        except Exception as err:
+            if verbose: self.frontend.update_error(unicode(err))
         else:
             if items is None:
                 if verbose: self.frontend.update_error(self)
                 return
+            elif not items:
+                if verbose: self.frontend.no_update(self)
+                return
             # Filter by current os, architecture, and distribution
-            items = [item for item in items if
-                     (item.get('os') is None or (item['os'] == OS and item['arch'] in (None, ARCH))) and
-                     (item.get('dist') is None or item['dist'] in DISTS)]
             appver = self.appver if (force or self.skipver is None) else self.skipver
             maxitem = max((item for item in items), key=lambda item: item['ver'])
             if appver >= maxitem['ver']:
@@ -119,7 +111,7 @@ class PySparkle(object):
                     url = maxitem['url']
                     if url is None: url = maxitem['link']
                     webbrowser.open(url, autoraise=True)
-                    if self.shutdown is None or self.shutdown():
+                    if self.shutdown is None or (self.shutdown is not False and self.shutdown()):
                         sys.exit(0)
                 else:
                     self.config['skip_version'] = self.skipver = maxitem['ver']

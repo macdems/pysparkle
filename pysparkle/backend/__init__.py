@@ -23,6 +23,9 @@ class PySparkleError(Exception):
         except NameError:
             self.message = message
 
+    def __str__(self):
+        return self.message
+
 
 class ConnectionError(PySparkleError):
     """

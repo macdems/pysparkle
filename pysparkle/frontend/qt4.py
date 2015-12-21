@@ -23,13 +23,14 @@ def ask_for_autocheck(pysparkle):
     return result == QtGui.QMessageBox.Yes
 
 
-def update_error(msg):
+def update_error(msg=None):
     dialog = QtGui.QMessageBox()
     dialog.setIcon(QtGui.QMessageBox.Critical)
     dialog.setWindowTitle(dialog.tr("Update Error!"))
     dialog.setText(dialog.tr("An error occurred in retrieving update information; "
                              "are you connected to the internet? Please try again later."))
-    dialog.setDetailedText(msg)
+    if msg is not None:
+        dialog.setDetailedText(msg)
     dialog.setStandardButtons(QtGui.QMessageBox.Ok)
     dialog.exec_()
 

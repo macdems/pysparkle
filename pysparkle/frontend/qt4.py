@@ -35,6 +35,17 @@ def update_error(msg=None):
     dialog.exec_()
 
 
+def no_info(pysparkle):
+    dialog = QtGui.QMessageBox()
+    dialog.setIcon(QtGui.QMessageBox.Warning)
+    dialog.setWindowTitle(dialog.tr("No update information!"))
+    dialog.setText(dialog.tr("There is no update information for {}.\n\n"
+                             "Maybe the software is not supported for your operating system...")
+                   .format(pysparkle.appname))
+    dialog.setStandardButtons(QtGui.QMessageBox.Ok)
+    dialog.exec_()
+
+
 def no_update(pysparkle):
     dialog = QtGui.QMessageBox()
     dialog.setIcon(QtGui.QMessageBox.Information)

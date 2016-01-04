@@ -95,7 +95,7 @@ class PySparkle(object):
                 if verbose: self.frontend.update_error(self)
                 return
             elif not items:
-                if verbose: self.frontend.no_update(self)
+                if verbose: self.frontend.no_info(self)
                 return
             # Filter by current os, architecture, and distribution
             appver = self.appver if (force or self.skipver is None) else self.skipver

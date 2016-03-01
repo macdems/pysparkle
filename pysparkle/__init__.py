@@ -43,7 +43,7 @@ class PySparkle(object):
     """
 
     def __init__(self, url, appname, appver, frontend='qt4', config=_DebugDict(),
-                 timeout=300, show_notes=False, shutdown=None):
+                 timeout=3, show_notes=False, shutdown=None):
         self.appname = appname
         self.skipver = config.get('skip_version')
         self.appver = appver

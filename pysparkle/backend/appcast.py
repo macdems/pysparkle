@@ -1,6 +1,8 @@
 # Copyright (c) 2015-2016 Maciej Dems <maciej.dems@p.lodz.pl>
 # See LICENSE file for copyright information.
 
+import sys
+
 try:
     from xml.etree import cElementTree as ElementTree
 except ImportError:
@@ -12,13 +14,15 @@ try:
 except ImportError:
     from urllib.request import urlopen
 
+
 import platform
 OS, _, _, _, ARCH, _ = platform.uname()
 OS = OS.lower()
 ARCH = ARCH.lower()
 ARCH = {'amd64': 'x86_64'}.get(ARCH, ARCH)
 if OS == 'linux':
-    _dist, _dist_ver, _dist_id = (s.lower() for s in platform.dist())
+    from .. import distro
+    _dist, _dist_ver, _dist_id = (s.lower() for s in distro.linux_distribution(False))
     DISTS = [_dist]
     _dist += '-'
     _parts = _dist_ver.split('.')
@@ -30,7 +34,9 @@ if OS == 'linux':
     if _dist_id:
         DISTS.append(_dist+_dist_id)
 else:
-    DISTS = []
+    python_version = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
+    DISTS = ['py'+python_version, 'python-'+python_version]
+
 
 from .import PySparkleBackend
 
@@ -75,8 +81,9 @@ class Appcast(PySparkleBackend):
                                 try:
                                     os, arch = os.split('-')
                                 except TypeError:
-                                    # prefer enclosure with specified os and arch over a generic one
-                                    if os_matched: continue
+                                    if os_matched:
+                                        # prefer enclosure with specified os and arch over a generic one
+                                        continue
                                 else:
                                     arch = {'x64': 'x86_64', 'x86': 'i386'}.get(arch, arch)
                                     if arch != ARCH:
@@ -84,8 +91,12 @@ class Appcast(PySparkleBackend):
                                 if os != OS:
                                     raise ValueError('os='+os)
                                 dist = enclosure.attrib.get(NS+'dist')
-                                if dist is not None and dist not in DISTS:
-                                    raise ValueError('dist='+dist)
+                                if dist is not None:
+                                    if dist not in DISTS:
+                                        raise ValueError('dist='+dist)
+                                elif os_matched:
+                                    # prefer enclosure with specified dist over a generic one
+                                    continue
                                 os_matched = True
                             elif os_matched:
                                 # prefer enclosure with specified os over a generic one

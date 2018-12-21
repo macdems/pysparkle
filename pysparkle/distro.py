@@ -963,7 +963,7 @@ class LinuxDistribution(object):
                 if isinstance(v, bytes):
                     v = v.decode('utf-8')
                 props[k.lower()] = v
-                if k == 'VERSION':
+                if k == 'VERSION' and 'codename' not in props:
                     # this handles cases in which the codename is in
                     # the `(CODENAME)` (rhel, centos, fedora) format
                     # or in the `, CODENAME` format (Ubuntu).
@@ -977,6 +977,8 @@ class LinuxDistribution(object):
                         props['codename'] = codename
                     else:
                         props['codename'] = ''
+                elif k == 'VERSION_CODENAME':
+                    props['codename'] = v
             else:
                 # Ignore any tokens that are not variable assignments
                 pass

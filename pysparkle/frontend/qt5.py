@@ -1,7 +1,14 @@
 # Copyright (c) 2015-2016 Maciej Dems <maciej.dems@p.lodz.pl>
 # See LICENSE file for copyright information.
 
-from PyQt5.QtWidgets import QMessageBox, QLabel, QTextEdit
+import sys
+if 'PySide2' in sys.modules:
+    from PySide2.QtWidgets import QMessageBox, QLabel, QTextEdit
+elif 'PyQt5' in sys.modules:
+    from PyQt5.QtWidgets import QMessageBox, QLabel, QTextEdit
+else:
+    raise ImportError("cannot determine Qt bindings: import PySide or PyQt4 first")
+
 
 
 def ask_for_autocheck(pysparkle):

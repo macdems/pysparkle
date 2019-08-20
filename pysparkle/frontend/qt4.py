@@ -3,10 +3,8 @@
 
 import sys
 if 'PySide' in sys.modules:
-    from PySide.QtCore import Qt
     from PySide.QtGui import QMessageBox, QLabel, QTextEdit
 elif 'PyQt4' in sys.modules:
-    from PyQt4.QtCore import Qt
     from PyQt4.QtGui import QMessageBox, QLabel, QTextEdit
 else:
     raise ImportError("cannot determine Qt bindings: import PySide or PyQt4 first")

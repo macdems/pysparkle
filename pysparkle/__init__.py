@@ -30,9 +30,9 @@ class PySparkle(object):
     :param url: Appcast URL for your application.
     :param appname: Application name to display in a window.
     :param appver: Current application version.
-    :param frontend: String containing frontend name. Currently only 'qt4' is implemented.
+    :param frontend: String containing frontend name. Currently only 'qt' is implemented.
     :param config: Dict-like object storing both the PySparkle configuration as well as its internal state.
-                   It should be a persistent dict, e.g. provided by a shevle module, or QSettings proxy.
+                   It should be a persistent dict, e.g. provided by a shelve module, or QSettings proxy.
                    After PySparkle writes anything to this dict it tries to call its 'sync' method, in which
                    you should implement permanently storing the dictionary.
     :param timeout: Allowed connection timeout.
@@ -42,7 +42,7 @@ class PySparkle(object):
                      PySparkle will issue ``sys.execv(...)`` to close the application and launch the installer.
     """
 
-    def __init__(self, url, appname, appver, frontend='qt4', config=_DebugDict(),
+    def __init__(self, url, appname, appver, frontend='qt', config=_DebugDict(),
                  timeout=3, show_notes=False, shutdown=None):
         self.appname = appname
         self.skipver = config.get('skip_version')

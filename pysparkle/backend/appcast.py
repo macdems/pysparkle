@@ -38,7 +38,7 @@ else:
     DISTS = ['py'+python_version, 'python-'+python_version]
 
 
-from .import PySparkleBackend
+from . import PySparkleBackend
 
 
 class Appcast(PySparkleBackend):
@@ -73,7 +73,8 @@ class Appcast(PySparkleBackend):
                                 'url': enclosure.attrib['url'],
                                 'ver': enclosure.attrib[NS+'version'],
                                 'signature': enclosure.attrib.get(NS+'dsaSignature'),
-                                'length': enclosure.attrib.get('length', 0)
+                                'length': enclosure.attrib.get('length', 0),
+                                'install': enclosure.attrib.get(NS+'install', 0)
                             }
                             encl['version'] = enclosure.attrib.get(NS+'shortVersionString', encl['ver'])
                             os = enclosure.attrib.get(NS+'os')

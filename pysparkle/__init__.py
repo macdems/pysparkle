@@ -2,8 +2,16 @@
 # See LICENSE file for copyright information.
 
 import sys
+import os
+import shlex
 import importlib
 import webbrowser
+import tempfile
+
+try:
+    from urllib2 import urlretrieve
+except ImportError:
+    from urllib.request import urlretrieve
 
 from .backend import ConnectionError
 from .backend.appcast import Appcast
@@ -37,13 +45,12 @@ class PySparkle(object):
                    you should implement permanently storing the dictionary.
     :param timeout: Allowed connection timeout.
     :param show_notes: Flag indicating if release notes should be shown for newer versions.
-    :param shutdown: Callable to be called when application needs to be shutdown for upgrade. It must not
-                     close the application, but it should return `True` if the application can be shut down.
-                     PySparkle will issue ``sys.execv(...)`` to close the application and launch the installer.
+    :param shutdown: Boolean indicating whether the application needs to be shutdown for upgrade or a callable
+                     returning such Boolean value. The callable must not close the application itself, but it
+                     should return `True` if the application can be shut down. PySparkle will issue ``os.execv(...)``
+                     to close the application and launch the installer.
     """
-
-    def __init__(self, url, appname, appver, frontend='qt', config=_DebugDict(),
-                 timeout=3, show_notes=False, shutdown=None):
+    def __init__(self, url, appname, appver, frontend='qt', config=_DebugDict(), timeout=3, show_notes=False, shutdown=True):
         self.appname = appname
         self.skipver = config.get('skip_version')
         self.appver = appver
@@ -51,12 +58,14 @@ class PySparkle(object):
         if self.skipver is not None:
             if self.skipver < self.appver:
                 config['skip_version'] = self.skipver = None
-                try: config.sync()
-                except AttributeError: pass
+                try:
+                    config.sync()
+                except AttributeError:
+                    pass
         self.timeout = timeout
         self.show_notes = show_notes
         self.shutdown = shutdown
-        self.frontend = importlib.import_module('.frontend.'+frontend, __name__)
+        self.frontend = importlib.import_module('.frontend.' + frontend, __name__)
         self.backend = Appcast(url, self)
         auto_check = self.config.get('automatic_check')
         if auto_check is None:
@@ -71,8 +80,10 @@ class PySparkle(object):
         """
         answer = self.frontend.ask_for_autocheck(self)
         self.config['automatic_check'] = answer
-        try: self.config.sync()
-        except AttributeError: pass
+        try:
+            self.config.sync()
+        except AttributeError:
+            pass
         return answer
 
     def check_update(self, verbose=True, force=False):
@@ -107,16 +118,54 @@ class PySparkle(object):
             answer = self.frontend.update_available(self, maxitem, notes)
             if answer is not None:
                 if answer:
-                    #TODO download and install or open browser
                     url = maxitem['url']
                     if url is None: url = maxitem['link']
+                    install = maxitem.get('install')
+                    if self.shutdown is False:
+                        install = None
+                    if install is not None:
+                        filename = os.path.join(tempfile.gettempdir(), os.path.basename(url))
+                        try:
+                            filename, headers = urlretrieve(url, filename)
+                            install = install.format(file=filename)
+                            install_args = [s for s in shlex.split(install)]
+                            if self.shutdown is True or self.shutdown():
+                                if os.name == 'nt':
+                                    try:
+                                        os.execvp(install_args[0], install_args)
+                                    except OSError:
+                                        # This error may happen because the installer is run with elevated privileges
+                                        try:
+                                            import win32com.client
+                                        except (ModuleNotFoundError, ImportError):
+                                            batch_handle, batch_filename = tempfile.mkstemp(suffix='.cmd')
+                                            with os.fdopen(batch_handle, "w") as batch_file:
+                                                print('@echo off\nstart %*\n(goto) 2>nul & del "%~f0"', file=batch_file)
+                                            os.execv(batch_filename, [batch_filename] + install_args)
+                                        else:
+                                            shell = win32com.client.Dispatch("WScript.Shell")
+                                            try:
+                                                shell.Run(install)
+                                            except:
+                                                sys.exit(127)
+                                            else:
+                                                sys.exit(0)
+                                else:
+                                    os.execvp(install_args[0], install_args)
+                        except:
+                            try:
+                                os.remove(filename)
+                            except:
+                                pass
                     webbrowser.open(url, autoraise=True)
-                    if self.shutdown is None or (self.shutdown is not False and self.shutdown()):
+                    if self.shutdown is True or (self.shutdown is not False and self.shutdown()):
                         sys.exit(0)
                 else:
                     self.config['skip_version'] = self.skipver = maxitem['ver']
-                    try: self.config.sync()
-                    except AttributeError: pass
+                    try:
+                        self.config.sync()
+                    except AttributeError:
+                        pass
 
 
 __all__ = ['PySparkle']

@@ -152,7 +152,7 @@ class PySparkle(object):
                                                 sys.exit(0)
                                 else:
                                     os.execvp(install_args[0], install_args)
-                        except:
+                        except Exception:
                             try:
                                 os.remove(filename)
                             except:
